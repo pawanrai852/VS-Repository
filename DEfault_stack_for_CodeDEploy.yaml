@@ -28,7 +28,7 @@ Parameters:
     Type: 'AWS::EC2::KeyPair::KeyName'
     MinLength: '1'
     MaxLength: '255'
-    Default: cloudFormationKeyPair
+    Default: pawanrai852
     AllowedPattern: '[\x20-\x7E]*'
     ConstraintDescription: Can contain only ASCII characters.
 Metadata:
@@ -266,4 +266,3 @@ Resources:
             - !Ref 'AWS::Region'
             - '-'
             - !Ref 'AWS::AccountId'
-
