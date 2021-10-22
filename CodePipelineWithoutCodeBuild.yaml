@@ -3,12 +3,6 @@ Parameters:
       Description: Email Address for sending SNS notifications for CodeCommit
       Type: String
       Default: pawanrai852@gmail.com
-  RepositoryBranch:
-      Description: The name of the branch for the CodeCommit repo
-      Type: String
-      Default: master
-      AllowedPattern: '[\x20-\x7E]*'
-      ConstraintDescription: Can contain only ASCII characters.
   TagKey:
       Type: String
       Default: Name
@@ -138,7 +132,7 @@ Resources:
     Type: 'AWS::CloudFormation::Stack'
     Properties:
       TemplateURL: >-
-        https://ec2bucketinindia.s3.amazonaws.com/FinalDraftForEC2CFCodePipeline1.yml
+        https://ec2bucketinindia.s3.amazonaws.com/FinalDraftForEC2CFCodePipeline2.yml
       TimeoutInMinutes: '60'
       Parameters:
         TagValue: !Ref TagValue
