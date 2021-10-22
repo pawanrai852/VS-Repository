@@ -138,7 +138,7 @@ Resources:
     Type: 'AWS::CloudFormation::Stack'
     Properties:
       TemplateURL: >-
-        https://s3.amazonaws.com/stelligent-public/cloudformation-templates/github/labs/codebuild/CodeDeploy_SampleCF_Template.json
+        https://ec2bucketinindia.s3.amazonaws.com/FinalDraftForEC2CFCodePipeline.yml
       TimeoutInMinutes: '60'
       Parameters:
         TagValue: !Ref TagValue
