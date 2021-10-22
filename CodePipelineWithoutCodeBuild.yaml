@@ -138,7 +138,7 @@ Resources:
     Type: 'AWS::CloudFormation::Stack'
     Properties:
       TemplateURL: >-
-        https://ec2bucketinindia.s3.amazonaws.com/FinalDraftForEC2CFCodePipeline.yml
+        https://ec2bucketinindia.s3.amazonaws.com/FinalDraftForEC2CFCodePipeline1.yml
       TimeoutInMinutes: '60'
       Parameters:
         TagValue: !Ref TagValue
@@ -184,7 +184,6 @@ Resources:
                 ConnectionArn: "arn:aws:codestar-connections:us-east-1:448992612150:connection/d811f751-5976-4af3-9d79-e15a763a08bd"
                 FullRepositoryId: "pawanrai852/CodeDeployRepository"
                 BranchName: "main"
-                OutputArtifactFormat: "CODE_ZIP"
               RunOrder: 1
         - Name: Deploy
           Actions:

@@ -82,6 +82,18 @@ Resources:
       UserData:
          Fn::Base64: 
             !Sub |
+              #!/bin/bash
+              sudo apt-get update
+              sudo apt-get apache2-bin -y
+              sudo apt-get update -y
+              sudo apt-get install ruby-full -y
+              sudo apt-get install wget -y
+              cd /home/ubuntu
+              wget https://aws-codedeploy-us-east-1.s3.us-east-1.amazonaws.com/latest/install
+              chmod +x ./install
+              sudo ./install auto
+              sudo service codedeploy-agent status
+
 
   CodeDeployTrustRole:
     Type: AWS::IAM::Role
