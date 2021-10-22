@@ -166,7 +166,7 @@ Resources:
       Subscription:
         - Endpoint: !Ref EmailAddress
           Protocol: email
-  CodeDeployEC2InstancesStack:
+  TestingNameCodeDeploy:
     Type: 'AWS::CloudFormation::Stack'
     Properties:
       TemplateURL: >-
@@ -186,23 +186,23 @@ Resources:
           DestinationArn: !Ref MySNSTopic
           Events:
             - all
-  MyApplication:
+  TestingAppName:
     Type: 'AWS::CodeDeploy::Application'
-    DependsOn: CodeDeployEC2InstancesStack
-  MyDeploymentGroup:
+    DependsOn: TestingNameCodeDeploy
+  TestingAppGroupName:
     Type: 'AWS::CodeDeploy::DeploymentGroup'
-    DependsOn: MyApplication
+    DependsOn: TestingAppName
     Properties:
-      ApplicationName: !Ref MyApplication
+      ApplicationName: !Ref TestingAppName
       DeploymentConfigName: CodeDeployDefault.AllAtOnce
       Ec2TagFilters:
         - Key: !Ref TagKey
           Value: !Ref TagValue
           Type: KEY_AND_VALUE
       ServiceRoleArn: !GetAtt 
-        - CodeDeployEC2InstancesStack
+        - TestingNameCodeDeploy
         - Outputs.CodeDeployTrustRoleARN
-  CodePipelineStack:
+  TestingName:
     Type: 'AWS::CodePipeline::Pipeline'
     DependsOn: CodeBuildJavaProject
     Properties:
@@ -255,8 +255,8 @@ Resources:
                 Provider: CodeDeploy
               OutputArtifacts: []
               Configuration:
-                ApplicationName: !Ref MyApplication
-                DeploymentGroupName: !Ref MyDeploymentGroup
+                ApplicationName: !Ref TestingAppName
+                DeploymentGroupName: !Ref TestingAppGroupName
               RunOrder: 1
       ArtifactStore:
         Type: S3
