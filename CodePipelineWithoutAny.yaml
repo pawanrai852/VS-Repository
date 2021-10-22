@@ -1,0 +1,211 @@
+Parameters:
+  EmailAddress:
+      Description: Email Address for sending SNS notifications for CodeCommit
+      Type: String
+      Default: pawanrai852@gmail.com
+  RepositoryBranch:
+      Description: The name of the branch for the CodeCommit repo
+      Type: String
+      Default: master
+      AllowedPattern: '[\x20-\x7E]*'
+      ConstraintDescription: Can contain only ASCII characters.
+  TagKey:
+      Type: String
+      Default: Name
+      Description: >-
+        The tag name that is associated with EC2 instances on which CodeDeploy
+        agent is installed
+  TagValue:
+      Description: The tag value that identifies this as a target for deployments.
+      Type: String
+      Default: CodeDeployEC2Tag
+      AllowedPattern: '[\x20-\x7E]*'
+      ConstraintDescription: Can contain only ASCII characters.
+  EC2KeyPairName:
+      Description: >-
+        Name of an existing Amazon EC2 key pair to enable SSH access to the
+        instances.
+      Type: 'AWS::EC2::KeyPair::KeyName'
+      MinLength: '1'
+      MaxLength: '255'
+      Default: cloudFormationKeyPair
+      AllowedPattern: '[\x20-\x7E]*'
+      ConstraintDescription: Can contain only ASCII characters.
+Metadata:
+    'AWS::CloudFormation::Interface':
+      ParameterGroups:
+        - Label:
+            default: Dynamic Configuration
+          Parameters:
+            - EC2KeyPairName
+            - RepositoryBranch
+      ParameterLabels:
+        EC2KeyPairName:
+          default: EC2 KeyPair Name
+        RepositoryName:
+          default: CodeCommit Repository Name
+        RepositoryBranch:
+          default: CodeCommit Repository Branch
+Resources:
+  #Policy for All the Three (CodeBuildRole, CodePipelineRole & CodeDeployRole)
+  CodeBuildRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: codebuild-service
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Action: '*'
+                Resource: '*'
+            Version: 2012-10-17
+  CodePipelineRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codepipeline.amazonaws.com
+            Action:
+              - 'sts:AssumeRole'
+      Path: /
+      Policies:
+        - PolicyName: codepipeline-service
+          PolicyDocument:
+            Statement:
+              - Action:
+                  - 'codecommit:GetBranch'
+                  - 'codecommit:GetCommit'
+                  - 'codecommit:UploadArchive'
+                  - 'codecommit:GetUploadArchiveStatus'
+                  - 'codecommit:CancelUploadArchive'
+                  - 'codebuild:*'
+                Resource: '*'
+                Effect: Allow
+              - Action:
+                  - 's3:GetObject'
+                  - 's3:GetObjectVersion'
+                  - 's3:GetBucketVersioning'
+                Resource: '*'
+                Effect: Allow
+              - Action:
+                  - 's3:PutObject'
+                Resource:
+                  - 'arn:aws:s3:::codepipeline*'
+                  - 'arn:aws:s3:::elasticbeanstalk*'
+                Effect: Allow
+              - Action:
+                  - 'codedeploy:CreateDeployment'
+                  - 'codedeploy:GetApplicationRevision'
+                  - 'codedeploy:GetDeployment'
+                  - 'codedeploy:GetDeploymentConfig'
+                  - 'codedeploy:RegisterApplicationRevision'
+                Resource: '*'
+                Effect: Allow
+              - Action:
+                  - 'elasticbeanstalk:*'
+                  - 'ec2:*'
+                  - 'elasticloadbalancing:*'
+                  - 'autoscaling:*'
+                  - 'cloudwatch:*'
+                  - 's3:*'
+                  - 'sns:*'
+                  - 'cloudformation:*'
+                  - 'rds:*'
+                  - 'sqs:*'
+                  - 'ecs:*'
+                  - 'iam:PassRole'
+                Resource: '*'
+                Effect: Allow
+              - Action:
+                  - 'lambda:InvokeFunction'
+                  - 'lambda:ListFunctions'
+                Resource: '*'
+                Effect: Allow
+            Version: 2012-10-17
+  TestingNameCodeDeploy:
+    Type: 'AWS::CloudFormation::Stack'
+    Properties:
+      TemplateURL: >-
+        https://s3.amazonaws.com/stelligent-public/cloudformation-templates/github/labs/codebuild/CodeDeploy_SampleCF_Template.json
+      TimeoutInMinutes: '60'
+      Parameters:
+        TagValue: !Ref TagValue
+        KeyPairName: !Ref EC2KeyPairName
+  TestingAppName:
+    Type: 'AWS::CodeDeploy::Application'
+    DependsOn: TestingNameCodeDeploy
+  TestingAppGroupName:
+    Type: 'AWS::CodeDeploy::DeploymentGroup'
+    DependsOn: TestingAppName
+    Properties:
+      ApplicationName: !Ref TestingAppName
+      DeploymentConfigName: CodeDeployDefault.AllAtOnce
+      Ec2TagFilters:
+        - Key: !Ref TagKey
+          Value: !Ref TagValue
+          Type: KEY_AND_VALUE
+      ServiceRoleArn: !GetAtt 
+        - TestingNameCodeDeploy
+        - Outputs.CodeDeployTrustRoleARN
+  TestingName:
+    Type: 'AWS::CodePipeline::Pipeline'
+    Properties:
+      RoleArn: !Join 
+        - ''
+        - - 'arn:aws:iam::'
+          - !Ref 'AWS::AccountId'
+          - ':role/'
+          - !Ref CodePipelineRole
+      Stages:
+        - Name: Source
+          Actions:
+            - InputArtifacts: []
+              Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: '1'
+                Provider: CodeStarSourceConnection
+              OutputArtifacts:
+                - Name: MyApp
+              Configuration:
+                ConnectionArn: "arn:aws:codestar-connections:us-east-1:448992612150:connection/d811f751-5976-4af3-9d79-e15a763a08bd"
+                FullRepositoryId: "pawanrai852/CodeDeployRepository"
+                BranchName: main
+                RepositoryName: CodeDeployRepository
+              RunOrder: 1
+        - Name: Deploy
+          Actions:
+            - InputArtifacts:
+                - Name: MyAppBuild
+              Name: DemoFleet
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Version: '1'
+                Provider: CodeDeploy
+              OutputArtifacts: []
+              Configuration:
+                ApplicationName: !Ref TestingAppName
+                DeploymentGroupName: !Ref TestingAppGroupName
+              RunOrder: 1
+      ArtifactStore:
+        Type: S3
+        Location: !Join 
+          - ''
+          - - codepipeline-
+            - !Ref 'AWS::Region'
+            - '-'
+            - !Ref 'AWS::AccountId'
