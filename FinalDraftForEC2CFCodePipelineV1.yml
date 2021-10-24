@@ -142,12 +142,9 @@ Resources:
         Statement:
         - Effect: Allow
           Action:
-            - "s3:ListAllMyBuckets"
-            - "s3:GetObjects"
-            - "s3:ListBucket"
+            - s3:* 
           Resource: 
-            - "arn:aws:s3:::reactsearch-scripts"
-            - "arn:aws:s3:::reactsearch-scripts/*"
+            - "*"
       Roles:
       - !Ref RootRole
   RootInstanceProfile:

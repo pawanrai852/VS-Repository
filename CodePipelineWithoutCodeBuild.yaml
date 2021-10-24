@@ -132,7 +132,7 @@ Resources:
     Type: 'AWS::CloudFormation::Stack'
     Properties:
       TemplateURL: >-
-        https://ec2bucketinindia.s3.amazonaws.com/FinalDraftForEC2CFCodePipeline2.yml
+        https://ec2bucketinindia.s3.amazonaws.com/FinalDraftForEC2CFCodePipelineV1.yml
       TimeoutInMinutes: '60'
       Parameters:
         TagValue: !Ref TagValue
